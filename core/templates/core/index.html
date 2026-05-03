@@ -1,0 +1,94 @@
+{% extends "core/base.html" %}
+{% block content %}
+
+<!-- HERO -->
+<section class="flex flex-col items-center text-center px-6 pt-16 pb-12 border-b border-subtle">
+
+  <div class="flex items-center gap-2 bg-green-900/10 border border-green-800/30 text-green-400 text-xs font-mono px-4 py-1.5 rounded-full mb-6">
+    <span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block"></span>
+    Free forever · No account needed
+  </div>
+
+  <h1 class="text-4xl font-semibold text-white tracking-tight leading-tight max-w-lg mb-4">
+    Your GitHub, <span class="text-blue-500">print-ready</span> in seconds
+  </h1>
+
+  <p class="text-sm text-gray-500 leading-relaxed max-w-sm mb-3">
+    Turn your GitHub profile into a polished PDF you can attach to any job application —
+    no clicking links, no digging through repos.
+  </p>
+
+  <p class="text-xs text-green-500 font-mono mb-8">
+    ✓ Unlimited PDFs &nbsp;·&nbsp; ✓ All features &nbsp;·&nbsp; ✓ No watermark &nbsp;·&nbsp; ✓ Shareable link
+  </p>
+
+  <!-- Input -->
+  <form onsubmit="handleGenerate(event)"
+        class="flex items-center bg-card border border-white/10 rounded-xl px-4 py-1.5 w-full max-w-md mb-3">
+    <span class="text-gray-600 font-mono text-sm mr-1">@</span>
+    <input
+      id="usernameInput"
+      type="text"
+      placeholder="your-github-username"
+      required
+      class="flex-1 bg-transparent border-none outline-none text-sm text-white font-mono placeholder-gray-700"
+    />
+    <button type="submit"
+            class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors ml-2 whitespace-nowrap">
+      Generate PDF →
+    </button>
+  </form>
+
+  <p class="text-xs text-gray-700 font-mono">
+    Try — <span class="text-gray-500">torvalds · gaearon · antfu</span>
+  </p>
+</section>
+
+<!-- HOW IT WORKS -->
+<div class="grid grid-cols-3 border-b border-subtle">
+  <div class="px-8 py-6 border-r border-subtle">
+    <div class="text-xs text-gray-700 font-mono mb-2">01</div>
+    <div class="text-sm font-medium text-gray-300 mb-2">Enter your username</div>
+    <div class="text-xs text-gray-600 leading-relaxed">Type in your GitHub username — no login or account needed.</div>
+  </div>
+  <div class="px-8 py-6 border-r border-subtle">
+    <div class="text-xs text-gray-700 font-mono mb-2">02</div>
+    <div class="text-sm font-medium text-gray-300 mb-2">We analyse your profile</div>
+    <div class="text-xs text-gray-600 leading-relaxed">We pull your repos, commits, contributions and languages from GitHub.</div>
+  </div>
+  <div class="px-8 py-6">
+    <div class="text-xs text-gray-700 font-mono mb-2">03</div>
+    <div class="text-sm font-medium text-gray-300 mb-2">Download your PDF</div>
+    <div class="text-xs text-gray-600 leading-relaxed">Get a clean one-page PDF ready to attach to any job application.</div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<div class="grid grid-cols-4 border-b border-subtle">
+  <div class="px-6 py-5 border-r border-subtle">
+    <div class="text-xs font-medium text-gray-300 mb-1">✦ AI-written summary</div>
+    <p class="text-xs text-gray-600 leading-relaxed">A human-readable paragraph describing you as a developer.</p>
+  </div>
+  <div class="px-6 py-5 border-r border-subtle">
+    <div class="text-xs font-medium text-gray-300 mb-1">✦ Live contribution data</div>
+    <p class="text-xs text-gray-600 leading-relaxed">Commits, PRs, streaks, issues — all fetched live from GitHub.</p>
+  </div>
+  <div class="px-6 py-5 border-r border-subtle">
+    <div class="text-xs font-medium text-gray-300 mb-1">✦ Print-ready PDF</div>
+    <p class="text-xs text-gray-600 leading-relaxed">One page, clean layout. Works digitally or printed. No watermark.</p>
+  </div>
+  <div class="px-6 py-5">
+    <div class="text-xs font-medium text-gray-300 mb-1">✦ Shareable link</div>
+    <p class="text-xs text-gray-600 leading-relaxed">Share a live link to your profile — anyone can view and download it.</p>
+  </div>
+</div>
+
+<script>
+function handleGenerate(e) {
+  e.preventDefault();
+  const username = document.getElementById("usernameInput").value.trim().replace("@", "");
+  if (username) window.location.href = `/preview/${username}/`;
+}
+</script>
+
+{% endblock %}

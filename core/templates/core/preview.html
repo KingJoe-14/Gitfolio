@@ -1,0 +1,312 @@
+{% extends "core/base.html" %}
+{% block title %}{{ username }} — GitFolio Preview{% endblock %}
+{% block content %}
+
+<div class="flex flex-1" style="min-height: calc(100vh - 104px);">
+
+  <!-- SIDEBAR -->
+  <aside class="w-56 border-r border-subtle flex flex-col gap-4 p-4 flex-shrink-0">
+
+    <div class="text-xs text-green-400 bg-green-900/10 border border-green-800/30 font-mono px-3 py-2 rounded-md text-center">
+      All features free
+    </div>
+
+    <div>
+      <p class="text-xs text-gray-700 font-mono uppercase tracking-widest mb-3">Sections</p>
+      <div class="flex items-center justify-between py-1.5">
+        <span class="text-xs text-gray-400">Developer Summary</span>
+        <div class="w-7 h-4 rounded-full bg-blue-600 relative flex-shrink-0">
+          <span class="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-white block"></span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between py-1.5">
+        <span class="text-xs text-gray-400">Stats</span>
+        <div class="w-7 h-4 rounded-full bg-blue-600 relative flex-shrink-0">
+          <span class="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-white block"></span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between py-1.5">
+        <span class="text-xs text-gray-400">Contributions</span>
+        <div class="w-7 h-4 rounded-full bg-blue-600 relative flex-shrink-0">
+          <span class="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-white block"></span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between py-1.5">
+        <span class="text-xs text-gray-400">Languages</span>
+        <div class="w-7 h-4 rounded-full bg-blue-600 relative flex-shrink-0">
+          <span class="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-white block"></span>
+        </div>
+      </div>
+      <div class="flex items-center justify-between py-1.5">
+        <span class="text-xs text-gray-400">Top Repos</span>
+        <div class="w-7 h-4 rounded-full bg-blue-600 relative flex-shrink-0">
+          <span class="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-white block"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="h-px bg-white/5"></div>
+
+    <a id="downloadBtn" href="/api/pdf/{{ username }}/"
+       class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2.5 rounded-lg text-center transition-colors block">
+      Download PDF
+    </a>
+    <button onclick="copyLink()"
+            class="text-gray-500 text-xs py-2 rounded-lg border border-white/8 hover:border-white/15 transition-colors">
+      Copy shareable link
+    </button>
+    <a href="/"
+       class="text-gray-600 text-xs py-2 rounded-lg border border-white/8 hover:border-white/15 transition-colors text-center block">
+      Generate another
+    </a>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="flex-1 bg-darker p-6 overflow-y-auto">
+
+    <!-- LOADING -->
+    <div id="loadingState" class="flex flex-col items-center justify-center h-full">
+      <h2 class="text-lg font-medium text-white mb-1">Generating your profile PDF</h2>
+      <p class="text-xs text-gray-600 font-mono mb-8">@{{ username }} · please wait</p>
+
+      <div class="bg-card border border-white/8 rounded-xl p-5 w-full max-w-sm flex flex-col gap-3 mb-6">
+
+        <div class="flex items-center gap-3" id="step0">
+          <div class="step-icon w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center flex-shrink-0">
+            <span class="text-gray-600 text-xs">1</span>
+          </div>
+          <div class="flex-1">
+            <div class="step-title text-xs font-medium text-gray-600">Fetching profile & bio</div>
+            <div class="text-xs text-gray-700 font-mono">github.com/{{ username }}</div>
+          </div>
+          <span class="step-status text-xs font-mono text-gray-700">waiting</span>
+        </div>
+
+        <div class="flex items-center gap-3" id="step1">
+          <div class="step-icon w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center flex-shrink-0">
+            <span class="text-gray-600 text-xs">2</span>
+          </div>
+          <div class="flex-1">
+            <div class="step-title text-xs font-medium text-gray-600">Scanning repositories</div>
+            <div class="text-xs text-gray-700 font-mono">languages & stars</div>
+          </div>
+          <span class="step-status text-xs font-mono text-gray-700">waiting</span>
+        </div>
+
+        <div class="flex items-center gap-3" id="step2">
+          <div class="step-icon w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center flex-shrink-0">
+            <span class="text-gray-600 text-xs">3</span>
+          </div>
+          <div class="flex-1">
+            <div class="step-title text-xs font-medium text-gray-600">Analysing contributions</div>
+            <div class="text-xs text-gray-700 font-mono">commits · PRs · streaks</div>
+          </div>
+          <span class="step-status text-xs font-mono text-gray-700">waiting</span>
+        </div>
+
+        <div class="flex items-center gap-3" id="step3">
+          <div class="step-icon w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center flex-shrink-0">
+            <span class="text-gray-600 text-xs">4</span>
+          </div>
+          <div class="flex-1">
+            <div class="step-title text-xs font-medium text-gray-600">Writing AI summary</div>
+            <div class="text-xs text-gray-700 font-mono">developer narrative</div>
+          </div>
+          <span class="step-status text-xs font-mono text-gray-700">waiting</span>
+        </div>
+
+        <div class="flex items-center gap-3" id="step4">
+          <div class="step-icon w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center flex-shrink-0">
+            <span class="text-gray-600 text-xs">5</span>
+          </div>
+          <div class="flex-1">
+            <div class="step-title text-xs font-medium text-gray-600">Building PDF</div>
+            <div class="text-xs text-gray-700 font-mono">formatting layout</div>
+          </div>
+          <span class="step-status text-xs font-mono text-gray-700">waiting</span>
+        </div>
+
+      </div>
+
+      <div class="w-full max-w-sm h-1 bg-white/5 rounded-full overflow-hidden">
+        <div id="progressBar" class="h-full bg-blue-600 rounded-full transition-all duration-700" style="width:0%"></div>
+      </div>
+      <p id="progressLabel" class="text-xs text-gray-700 font-mono mt-2">Starting…</p>
+    </div>
+
+    <!-- PREVIEW -->
+    <div id="profilePreview" class="hidden max-w-xl mx-auto">
+      <div class="bg-white rounded-md overflow-hidden shadow-2xl text-gray-900">
+
+        <div class="bg-gray-900 px-5 py-4 flex items-center gap-3">
+          <div id="avatar" class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0"></div>
+          <div>
+            <div id="pName" class="text-sm font-semibold text-white"></div>
+            <div id="pMeta" class="text-xs text-gray-500 font-mono"></div>
+          </div>
+        </div>
+
+        <div class="px-5 py-3 border-b border-gray-100">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Developer Summary</p>
+          <div id="pSummary" class="bg-gray-50 border-l-2 border-blue-500 px-3 py-2 text-xs text-gray-600 leading-relaxed"></div>
+          <div id="pArchetype" class="inline-flex mt-2 text-xs text-blue-600 bg-blue-50 border border-blue-200 px-3 py-1 rounded"></div>
+        </div>
+
+        <div id="pStats" class="grid grid-cols-4 border-b border-gray-100"></div>
+
+        <div class="px-5 py-3 border-b border-gray-100">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Languages</p>
+          <div id="pLangs" class="flex flex-col gap-1.5"></div>
+        </div>
+
+        <div class="px-5 py-3 border-b border-gray-100">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Top Repositories</p>
+          <div id="pRepos" class="grid grid-cols-2 gap-2"></div>
+        </div>
+
+        <div class="bg-gray-50 px-5 py-2 flex justify-between">
+          <span class="text-xs text-gray-400">Generated by GitFolio · free forever</span>
+          <span id="pFooter" class="text-xs text-gray-400 font-mono"></span>
+        </div>
+      </div>
+      <p class="text-center text-xs text-gray-600 mt-4">
+        This is a preview. Download the PDF for the full formatted version.
+      </p>
+    </div>
+
+    <!-- ERROR -->
+    <div id="errorState" class="hidden flex flex-col items-center justify-center h-full text-center">
+      <div class="text-4xl mb-4">⚠️</div>
+      <h2 class="text-lg font-medium text-white mb-2">Something went wrong</h2>
+      <p id="errorMsg" class="text-sm text-gray-500 mb-6"></p>
+      <a href="/" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-lg transition-colors">
+        Try again
+      </a>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const username = "{{ username }}";
+const LANG_COLORS = {
+  TypeScript:"#2563eb", JavaScript:"#d97706", Python:"#7c3aed",
+  Go:"#0891b2", Rust:"#dc2626", Shell:"#059669",
+  HTML:"#ea580c", CSS:"#2563eb", Ruby:"#dc2626",
+};
+
+function setStep(i, status) {
+  const row   = document.getElementById(`step${i}`);
+  const icon  = row.querySelector(".step-icon");
+  const title = row.querySelector(".step-title");
+  const stat  = row.querySelector(".step-status");
+  if (status === "running") {
+    icon.innerHTML   = `<span class="w-2 h-2 rounded-full bg-amber-400 pulse-dot inline-block"></span>`;
+    title.className  = "step-title text-xs font-medium text-gray-200";
+    stat.className   = "step-status text-xs font-mono text-amber-400";
+    stat.textContent = "running";
+  } else if (status === "done") {
+    icon.innerHTML   = `<span class="text-green-400 text-sm">✓</span>`;
+    icon.className   = "step-icon w-8 h-8 rounded-lg bg-green-900/20 border border-green-800/30 flex items-center justify-center flex-shrink-0";
+    title.className  = "step-title text-xs font-medium text-gray-300";
+    stat.className   = "step-status text-xs font-mono text-green-500";
+    stat.textContent = "done";
+  }
+}
+
+async function load() {
+  const bar   = document.getElementById("progressBar");
+  const label = document.getElementById("progressLabel");
+
+  setStep(0, "running");
+  bar.style.width   = "10%";
+  label.textContent = "Fetching profile…";
+
+  try {
+    const res  = await fetch(`/api/profile/${username}/`);
+    const json = await res.json();
+
+    if (!json.success) { showError(json.error); return; }
+
+    setStep(0, "done"); setStep(1, "done"); setStep(2, "done");
+    bar.style.width   = "70%";
+    label.textContent = "Writing AI summary…";
+    setStep(3, "running");
+
+    await new Promise(r => setTimeout(r, 500));
+    setStep(3, "done"); setStep(4, "done");
+    bar.style.width   = "100%";
+    label.textContent = "Done!";
+
+    await new Promise(r => setTimeout(r, 400));
+    renderPreview(json);
+
+  } catch(e) {
+    showError("Network error. Please try again.");
+  }
+}
+
+function renderPreview(json) {
+  const { data, summary, archetype } = json;
+  const { profile, contributions, languages, top_repos, total_stars } = data;
+
+  document.getElementById("loadingState").classList.add("hidden");
+  document.getElementById("profilePreview").classList.remove("hidden");
+
+  const initials = profile.name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+  document.getElementById("avatar").textContent     = initials;
+  document.getElementById("pName").textContent      = profile.name;
+  document.getElementById("pMeta").textContent      = `@${profile.username} · ${profile.location}`;
+  document.getElementById("pSummary").textContent   = summary;
+  document.getElementById("pArchetype").textContent = archetype;
+
+  document.getElementById("pStats").innerHTML = [
+    [contributions.total.toLocaleString(), "Contributions"],
+    [contributions.commits.toLocaleString(), "Commits"],
+    [profile.public_repos, "Repos"],
+    [total_stars.toLocaleString(), "Stars"],
+  ].map(([n, l]) => `
+    <div class="py-3 px-3 text-center border-r border-gray-100 last:border-r-0">
+      <div class="text-base font-semibold text-gray-800">${n}</div>
+      <div class="text-xs text-gray-400 mt-0.5">${l}</div>
+    </div>`).join("");
+
+  document.getElementById("pLangs").innerHTML = languages.map(l => `
+    <div class="flex items-center gap-2">
+      <span class="w-16 text-xs text-gray-600 font-mono">${l.name}</span>
+      <div class="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+        <div class="h-full rounded-full" style="width:${l.percentage}%;background:${LANG_COLORS[l.name]||'#6b7280'};"></div>
+      </div>
+      <span class="text-xs text-gray-400 w-7 text-right">${l.percentage}%</span>
+    </div>`).join("");
+
+  document.getElementById("pRepos").innerHTML = top_repos.map(r => `
+    <div class="border border-gray-100 rounded p-2">
+      <div class="text-xs font-semibold text-blue-600 mb-1 font-mono">${r.name}</div>
+      <div class="text-xs text-gray-500 mb-2 leading-tight">${r.description.slice(0,55)}${r.description.length>55?"…":""}</div>
+      <div class="flex items-center gap-1 text-xs text-gray-400">
+        <span class="w-2 h-2 rounded-full inline-block" style="background:${LANG_COLORS[r.language]||'#6b7280'};"></span>
+        ${r.language} · ★${r.stars} · ⑂${r.forks}
+      </div>
+    </div>`).join("");
+
+  const now = new Date();
+  document.getElementById("pFooter").textContent =
+    `${now.toLocaleString("default",{month:"long"})} ${now.getFullYear()} · github.com/${profile.username}`;
+}
+
+function showError(msg) {
+  document.getElementById("loadingState").classList.add("hidden");
+  document.getElementById("errorState").classList.remove("hidden");
+  document.getElementById("errorMsg").textContent = msg;
+}
+
+function copyLink() {
+  navigator.clipboard.writeText(window.location.href);
+  alert("Link copied!");
+}
+
+load();
+</script>
+
+{% endblock %}
