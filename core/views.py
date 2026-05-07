@@ -15,14 +15,14 @@ def index(request):
 def examples(request):
     devs = [
         {
-            "name": "James Darko", "username": "jdarko_dev",
-            "initials": "JD", "color": "#1d4ed8",
+            "name": "Kingsley Thompson", "username": "KingJoe-14",
+            "initials": "KT", "color": "#1d4ed8",
             "contributions": "2,341", "repos": 47, "years": 5,
             "tags": ["TypeScript", "Python", "Go"],
         },
         {
-            "name": "Ama Kumi", "username": "amakumi",
-            "initials": "AK", "color": "#059669",
+            "name": "Paapa Kwesi Bentil", "username": "PBentil",
+            "initials": "PKB", "color": "#059669",
             "contributions": "1,890", "repos": 32, "years": 3,
             "tags": ["React", "Vue", "CSS"],
         },
