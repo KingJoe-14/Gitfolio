@@ -2,16 +2,17 @@
 {% block title %}{{ username }} — GitFolio Preview{% endblock %}
 {% block content %}
 
-<div class="flex flex-1" style="min-height: calc(100vh - 104px);">
+<div class="flex flex-col md:flex-row flex-1" style="min-height: calc(100vh - 104px);">
 
   <!-- SIDEBAR -->
-  <aside class="w-56 border-r border-subtle flex flex-col gap-4 p-4 flex-shrink-0">
+  <aside class="w-full md:w-56 border-b md:border-b-0 md:border-r border-subtle flex flex-col gap-4 p-4 md:flex-shrink-0">
 
     <div class="text-xs text-green-400 bg-green-900/10 border border-green-800/30 font-mono px-3 py-2 rounded-md text-center">
       All features free
     </div>
 
-    <div>
+    <!-- Sections — hidden on mobile to save space -->
+    <div class="hidden md:block">
       <p class="text-xs text-gray-700 font-mono uppercase tracking-widest mb-3">Sections</p>
       <div class="flex items-center justify-between py-1.5">
         <span class="text-xs text-gray-400">Developer Summary</span>
@@ -43,87 +44,90 @@
           <span class="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-white block"></span>
         </div>
       </div>
+      <div class="h-px bg-white/5 mt-2"></div>
     </div>
 
-    <div class="h-px bg-white/5"></div>
+    <!-- Action buttons — always visible, horizontal on mobile -->
+    <div class="flex flex-row md:flex-col gap-2">
+      <a id="downloadBtn" href="/api/pdf/{{ username }}/"
+         class="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2.5 rounded-lg text-center transition-colors block">
+        Download PDF
+      </a>
+      <button onclick="copyLink()"
+              class="flex-1 md:flex-none text-gray-500 text-xs py-2 rounded-lg border border-white/8 hover:border-white/15 transition-colors">
+        Copy link
+      </button>
+      <a href="/"
+         class="flex-1 md:flex-none text-gray-600 text-xs py-2 rounded-lg border border-white/8 hover:border-white/15 transition-colors text-center block">
+        New search
+      </a>
+    </div>
 
-    <a id="downloadBtn" href="/api/pdf/{{ username }}/"
-       class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2.5 rounded-lg text-center transition-colors block">
-      Download PDF
-    </a>
-    <button onclick="copyLink()"
-            class="text-gray-500 text-xs py-2 rounded-lg border border-white/8 hover:border-white/15 transition-colors">
-      Copy shareable link
-    </button>
-    <a href="/"
-       class="text-gray-600 text-xs py-2 rounded-lg border border-white/8 hover:border-white/15 transition-colors text-center block">
-      Generate another
-    </a>
   </aside>
 
   <!-- MAIN -->
-  <main class="flex-1 bg-darker p-6 overflow-y-auto">
+  <main class="flex-1 bg-darker p-4 md:p-6 overflow-y-auto">
 
     <!-- LOADING -->
-    <div id="loadingState" class="flex flex-col items-center justify-center h-full">
-      <h2 class="text-lg font-medium text-white mb-1">Generating your profile PDF</h2>
-      <p class="text-xs text-gray-600 font-mono mb-8">@{{ username }} · please wait</p>
+    <div id="loadingState" class="flex flex-col items-center justify-center min-h-64">
+      <h2 class="text-lg font-medium text-white mb-1 text-center">Generating your profile PDF</h2>
+      <p class="text-xs text-gray-600 font-mono mb-6 text-center">@{{ username }} — please wait</p>
 
-      <div class="bg-card border border-white/8 rounded-xl p-5 w-full max-w-sm flex flex-col gap-3 mb-6">
+      <div class="bg-card border border-white/8 rounded-xl p-4 w-full max-w-sm flex flex-col gap-3 mb-4">
 
         <div class="flex items-center gap-3" id="step0">
           <div class="step-icon w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center flex-shrink-0">
             <span class="text-gray-600 text-xs">1</span>
           </div>
-          <div class="flex-1">
+          <div class="flex-1 min-w-0">
             <div class="step-title text-xs font-medium text-gray-600">Fetching profile & bio</div>
-            <div class="text-xs text-gray-700 font-mono">github.com/{{ username }}</div>
+            <div class="text-xs text-gray-700 font-mono truncate">github.com/{{ username }}</div>
           </div>
-          <span class="step-status text-xs font-mono text-gray-700">waiting</span>
+          <span class="step-status text-xs font-mono text-gray-700 flex-shrink-0">waiting</span>
         </div>
 
         <div class="flex items-center gap-3" id="step1">
           <div class="step-icon w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center flex-shrink-0">
             <span class="text-gray-600 text-xs">2</span>
           </div>
-          <div class="flex-1">
+          <div class="flex-1 min-w-0">
             <div class="step-title text-xs font-medium text-gray-600">Scanning repositories</div>
             <div class="text-xs text-gray-700 font-mono">languages & stars</div>
           </div>
-          <span class="step-status text-xs font-mono text-gray-700">waiting</span>
+          <span class="step-status text-xs font-mono text-gray-700 flex-shrink-0">waiting</span>
         </div>
 
         <div class="flex items-center gap-3" id="step2">
           <div class="step-icon w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center flex-shrink-0">
             <span class="text-gray-600 text-xs">3</span>
           </div>
-          <div class="flex-1">
+          <div class="flex-1 min-w-0">
             <div class="step-title text-xs font-medium text-gray-600">Analysing contributions</div>
             <div class="text-xs text-gray-700 font-mono">commits · PRs · streaks</div>
           </div>
-          <span class="step-status text-xs font-mono text-gray-700">waiting</span>
+          <span class="step-status text-xs font-mono text-gray-700 flex-shrink-0">waiting</span>
         </div>
 
         <div class="flex items-center gap-3" id="step3">
           <div class="step-icon w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center flex-shrink-0">
             <span class="text-gray-600 text-xs">4</span>
           </div>
-          <div class="flex-1">
+          <div class="flex-1 min-w-0">
             <div class="step-title text-xs font-medium text-gray-600">Writing AI summary</div>
             <div class="text-xs text-gray-700 font-mono">developer narrative</div>
           </div>
-          <span class="step-status text-xs font-mono text-gray-700">waiting</span>
+          <span class="step-status text-xs font-mono text-gray-700 flex-shrink-0">waiting</span>
         </div>
 
         <div class="flex items-center gap-3" id="step4">
           <div class="step-icon w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center flex-shrink-0">
             <span class="text-gray-600 text-xs">5</span>
           </div>
-          <div class="flex-1">
+          <div class="flex-1 min-w-0">
             <div class="step-title text-xs font-medium text-gray-600">Building PDF</div>
             <div class="text-xs text-gray-700 font-mono">formatting layout</div>
           </div>
-          <span class="step-status text-xs font-mono text-gray-700">waiting</span>
+          <span class="step-status text-xs font-mono text-gray-700 flex-shrink-0">waiting</span>
         </div>
 
       </div>
@@ -140,9 +144,9 @@
 
         <div class="bg-gray-900 px-5 py-4 flex items-center gap-3">
           <div id="avatar" class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0"></div>
-          <div>
-            <div id="pName" class="text-sm font-semibold text-white"></div>
-            <div id="pMeta" class="text-xs text-gray-500 font-mono"></div>
+          <div class="min-w-0">
+            <div id="pName" class="text-sm font-semibold text-white truncate"></div>
+            <div id="pMeta" class="text-xs text-gray-500 font-mono truncate"></div>
           </div>
         </div>
 
@@ -152,7 +156,8 @@
           <div id="pArchetype" class="inline-flex mt-2 text-xs text-blue-600 bg-blue-50 border border-blue-200 px-3 py-1 rounded"></div>
         </div>
 
-        <div id="pStats" class="grid grid-cols-4 border-b border-gray-100"></div>
+        <!-- Stats: 2 cols on mobile, 4 on desktop -->
+        <div id="pStats" class="grid grid-cols-2 md:grid-cols-4 border-b border-gray-100"></div>
 
         <div class="px-5 py-3 border-b border-gray-100">
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Languages</p>
@@ -161,10 +166,11 @@
 
         <div class="px-5 py-3 border-b border-gray-100">
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Top Repositories</p>
-          <div id="pRepos" class="grid grid-cols-2 gap-2"></div>
+          <!-- 1 col on mobile, 2 on desktop -->
+          <div id="pRepos" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
         </div>
 
-        <div class="bg-gray-50 px-5 py-2 flex justify-between">
+        <div class="bg-gray-50 px-5 py-2 flex flex-col sm:flex-row justify-between gap-1">
           <span class="text-xs text-gray-400">Generated by GitFolio · free forever</span>
           <span id="pFooter" class="text-xs text-gray-400 font-mono"></span>
         </div>
@@ -187,6 +193,7 @@
   </main>
 </div>
 
+<!-- keep your existing <script> block unchanged -->
 <script>
 const username = "{{ username }}";
 const LANG_COLORS = {
@@ -266,7 +273,7 @@ function renderPreview(json) {
     [profile.public_repos, "Repos"],
     [total_stars.toLocaleString(), "Stars"],
   ].map(([n, l]) => `
-    <div class="py-3 px-3 text-center border-r border-gray-100 last:border-r-0">
+    <div class="py-3 px-3 text-center border-r border-b border-gray-100 last:border-r-0">
       <div class="text-base font-semibold text-gray-800">${n}</div>
       <div class="text-xs text-gray-400 mt-0.5">${l}</div>
     </div>`).join("");
