@@ -40,5 +40,5 @@ WSGI_APPLICATION = "gitfolio.wsgi.application"
 STATIC_URL = "/static/"
 
 # API Keys — add these to your .env file
-GITHUB_TOKEN       = os.getenv("GITHUB_TOKEN", "")
-ANTHROPIC_API_KEY  = os.getenv("ANTHROPIC_API_KEY", "")
+GITHUB_TOKEN    = os.getenv("GITHUB_TOKEN", "")
+OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY", "")

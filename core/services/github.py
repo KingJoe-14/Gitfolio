@@ -13,8 +13,24 @@ def _headers():
     }
 
 
+def _calc_years_on_github(created_at_str: str) -> int:
+    """
+    Return the number of full calendar years since the account was created.
+    e.g. created Jan 2022, now May 2026 → 4 years
+         created Nov 2024, now May 2026 → 1 year
+    Always at least 1 if any activity exists.
+    """
+    created = datetime.strptime(created_at_str, "%Y-%m-%dT%H:%M:%SZ")
+    now     = datetime.utcnow()
+    years   = now.year - created.year
+    # Subtract 1 if we haven't passed the anniversary month/day yet this year
+    if (now.month, now.day) < (created.month, created.day):
+        years -= 1
+    return max(years, 1)
+
+
 # ── 1. Basic profile ──────────────────────────────────────────────────────────
-def fetch_profile(username):
+def fetch_profile(username: str) -> dict:
     r = requests.get(
         f"{REST_BASE}/users/{username}",
         headers=_headers(),
@@ -24,9 +40,6 @@ def fetch_profile(username):
         raise ValueError(f"GitHub user '{username}' not found.")
     r.raise_for_status()
     d = r.json()
-
-    created  = datetime.strptime(d["created_at"], "%Y-%m-%dT%H:%M:%SZ")
-    years    = (datetime.utcnow() - created).days // 365
 
     return {
         "name":            d.get("name") or d["login"],
@@ -40,12 +53,13 @@ def fetch_profile(username):
         "following":       d["following"],
         "public_repos":    d["public_repos"],
         "created_at":      d["created_at"],
-        "years_on_github": years,
+        # Correctly computed: calendar years elapsed since account creation
+        "years_on_github": _calc_years_on_github(d["created_at"]),
     }
 
 
 # ── 2. Repositories + languages ───────────────────────────────────────────────
-def fetch_repos(username):
+def fetch_repos(username: str) -> dict:
     r = requests.get(
         f"{REST_BASE}/users/{username}/repos?per_page=100&sort=pushed",
         headers=_headers(),
@@ -88,11 +102,22 @@ def fetch_repos(username):
 
 
 # ── 3. Contributions via GraphQL ──────────────────────────────────────────────
-def fetch_contributions(username):
+def fetch_contributions(username: str) -> dict:
+    """
+    Fetches contribution data using an explicit 12-month window (from → to)
+    so the calendar always covers exactly the past 365 days regardless of
+    where we are in the calendar year.  This prevents the streak from being
+    cut off at a year boundary.
+    """
+    now   = datetime.utcnow()
+    # GitHub requires ISO 8601 with timezone offset
+    to_dt   = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    from_dt = (now.replace(year=now.year - 1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
     query = """
-    query($username: String!) {
+    query($username: String!, $from: DateTime!, $to: DateTime!) {
       user(login: $username) {
-        contributionsCollection {
+        contributionsCollection(from: $from, to: $to) {
           totalCommitContributions
           totalPullRequestContributions
           totalIssueContributions
@@ -113,7 +138,10 @@ def fetch_contributions(username):
     """
     r = requests.post(
         GRAPHQL_URL,
-        json={"query": query, "variables": {"username": username}},
+        json={
+            "query":     query,
+            "variables": {"username": username, "from": from_dt, "to": to_dt},
+        },
         headers=_headers(),
         timeout=15,
     )
@@ -123,12 +151,16 @@ def fetch_contributions(username):
     if "errors" in body:
         raise ValueError(body["errors"][0]["message"])
 
-    user     = body["data"]["user"]
-    col      = user["contributionsCollection"]
-    cal      = col["contributionCalendar"]
-    all_days = [d for w in cal["weeks"] for d in w["contributionDays"]]
+    user = body["data"]["user"]
+    col  = user["contributionsCollection"]
+    cal  = col["contributionCalendar"]
 
-    now        = datetime.utcnow()
+    # Flat sorted list of all days in the 12-month window
+    all_days = sorted(
+        [d for w in cal["weeks"] for d in w["contributionDays"]],
+        key=lambda d: d["date"],
+    )
+
     this_month = sum(
         d["contributionCount"] for d in all_days
         if d["date"][:7] == now.strftime("%Y-%m")
@@ -138,13 +170,20 @@ def fetch_contributions(username):
         for d in (cal["weeks"][-1]["contributionDays"] if cal["weeks"] else [])
     )
 
+    # Build heatmap (all 52 weeks)
     heatmap = []
-    for week in cal["weeks"][-26:]:
+    for week in cal["weeks"]:
         row = []
         for day in week["contributionDays"]:
-            c = day["contributionCount"]
-            level = 0 if c == 0 else 1 if c <= 2 else 2 if c <= 5 else 3 if c <= 9 else 4
-            row.append({"date": day["date"], "count": c, "level": level})
+            cnt   = day["contributionCount"]
+            level = (
+                0 if cnt == 0  else
+                1 if cnt <= 2  else
+                2 if cnt <= 5  else
+                3 if cnt <= 9  else
+                4
+            )
+            row.append({"date": day["date"], "count": cnt, "level": level})
         heatmap.append(row)
 
     streak = _calc_streak(all_days)
@@ -164,22 +203,50 @@ def fetch_contributions(username):
     }
 
 
-def _calc_streak(days):
-    sorted_days = sorted(days, key=lambda d: d["date"], reverse=True)
-    current = longest = temp = 0
-    for i, d in enumerate(sorted_days):
-        if d["contributionCount"] > 0:
-            temp += 1
-            if i == 0 or current == temp - 1:
-                current = temp
+def _calc_streak(days: list) -> dict:
+    """
+    Calculate current and longest contribution streaks.
+
+    days: list of dicts with keys 'date' (str YYYY-MM-DD) and
+          'contributionCount' (int), sorted ascending by date.
+
+    Longest streak: the longest unbroken run of days with contributions.
+
+    Current streak: consecutive days with contributions counting back from
+    the most recent active day.  We allow today to be empty (it's still
+    early in the day) and start counting from yesterday if today has 0.
+    """
+    sorted_days = sorted(days, key=lambda d: d["date"])
+
+    # ── Longest ───────────────────────────────────────────────────────────────
+    longest = temp = 0
+    for day in sorted_days:
+        if day["contributionCount"] > 0:
+            temp   += 1
             longest = max(longest, temp)
         else:
             temp = 0
+
+    # ── Current ───────────────────────────────────────────────────────────────
+    # Walk backwards; skip the very last day if it has 0 contributions
+    # (user hasn't committed yet today — don't break the streak for that)
+    reversed_days = list(reversed(sorted_days))
+    start_index   = 0
+    if reversed_days and reversed_days[0]["contributionCount"] == 0:
+        start_index = 1  # skip today's empty slot
+
+    current = 0
+    for day in reversed_days[start_index:]:
+        if day["contributionCount"] > 0:
+            current += 1
+        else:
+            break
+
     return {"current": current, "longest": longest}
 
 
-# ── 4. Master function — fetch everything ─────────────────────────────────────
-def fetch_all(username):
+# ── 4. Master fetch ───────────────────────────────────────────────────────────
+def fetch_all(username: str) -> dict:
     profile   = fetch_profile(username)
     repo_data = fetch_repos(username)
     contribs  = fetch_contributions(username)
